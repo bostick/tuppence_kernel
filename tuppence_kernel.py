@@ -37,7 +37,19 @@ class TuppenceKernel(Kernel):
                 stream_content = {'name': 'stdout', 'text': output}
                 self.send_response(self.iopub_socket, 'stream', stream_content)
 
-            return {'status': 'ok',
+            return {'status': 'abort',
+                    # The base class increments the execution count
+                    'execution_count': self.execution_count,
+                    'payload': [],
+                    'user_expressions': {},
+                   }
+        except OSError:
+            if not silent:
+                output = 'killed'
+                stream_content = {'name': 'stdout', 'text': output}
+                self.send_response(self.iopub_socket, 'stream', stream_content)
+
+            return {'status': 'abort',
                     # The base class increments the execution count
                     'execution_count': self.execution_count,
                     'payload': [],
@@ -48,6 +60,8 @@ class TuppenceKernel(Kernel):
         try:
             self.replwrapper.run_command('exit()')
         except EOF:
+            pass
+        except OSError:
             pass
 
 if __name__ == '__main__':
